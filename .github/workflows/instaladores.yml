@@ -1,0 +1,62 @@
+# Gera os instaladores do app nativo (Tauri) para Windows e Linux.
+#
+# Não roda a cada push (o deploy do site continua no deploy.yml). Dispara:
+#   - manualmente: aba Actions → "Instaladores" → Run workflow;
+#   - ao enviar uma tag de versão:  git tag v0.1.0 && git push origin v0.1.0
+#
+# O resultado é uma Release em RASCUNHO (só você vê) com os arquivos:
+#   Windows: .msi e -setup.exe     Linux: .deb, .rpm e .AppImage
+# Revise e clique em "Publish release" quando quiser liberar.
+name: Instaladores
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependências do Linux (WebKitGTK)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/src-tauri -> target
+
+      - name: Instalar dependências
+        working-directory: frontend
+        run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: frontend
+          tagName: v__VERSION__
+          releaseName: CLARA.js v__VERSION__
+          releaseBody: Instaladores do CLARA.js para Windows e Linux.
+          releaseDraft: true
+          prerelease: false

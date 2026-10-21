@@ -38,6 +38,8 @@ A contribuição do trabalho para a Ciência da Computação é a **arquitetura 
 
 Cada pasta de experimento tem um `README.md` explicando em detalhe como ele foi feito e um `teoria.md` com o conteúdo para o aluno. Os dois aparecem dentro do próprio site.
 
+Os requisitos funcionais e não funcionais da plataforma estão em [`docs/REQUISITOS.md`](docs/REQUISITOS.md). A versão instalável (Windows, Linux e Android) e o funcionamento offline estão descritos em [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md).
+
 ## Stack
 
 - **React 19** + **TypeScript**: interface e composição das páginas

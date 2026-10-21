@@ -1,0 +1,25 @@
+[package]
+name = "clarajs"
+version = "0.1.0"
+description = "CLARA.js — laboratórios virtuais de Física, Química e Biologia"
+authors = ["Darlan Ferreira"]
+edition = "2021"
+
+# A biblioteca é o ponto de entrada no Android (o sistema carrega um .so);
+# no desktop, main.rs só chama clarajs_lib::run().
+[lib]
+name = "clarajs_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

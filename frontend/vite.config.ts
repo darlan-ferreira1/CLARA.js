@@ -10,8 +10,8 @@ const tauri = !!process.env.TAURI_ENV_PLATFORM
 const tauriDevHost = process.env.TAURI_DEV_HOST
 
 export default defineConfig({
-  // GitHub Pages publica em /TCC/; o app nativo serve os arquivos na raiz.
-  base: tauri ? '/' : '/TCC/',
+  // GitHub Pages publica em /CLARA.js/; o app nativo serve os arquivos na raiz.
+  base: tauri ? '/' : '/CLARA.js/',
   // O HTTPS autoassinado só é necessário no navegador (câmera/WebXR exigem
   // contexto seguro). O WebView do Tauri recusaria o certificado, e
   // http://localhost já é contexto seguro.

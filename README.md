@@ -4,7 +4,7 @@
 
 Os experimentos rodam inteiramente no navegador, sem instalação e sem servidor: no computador, no celular, em realidade aumentada, em realidade virtual e com interação por gestos pela webcam.
 
-Site publicado: https://darlan-ferreira1.github.io/TCC/
+Site publicado: https://darlan-ferreira1.github.io/CLARA.js/
 
 ## A proposta
 
@@ -126,14 +126,14 @@ Dentro de `frontend/`:
 
 ```bash
 npm install
-npm run dev              # https://localhost:5173/TCC/ (certificado autoassinado)
+npm run dev              # https://localhost:5173/CLARA.js/ (certificado autoassinado)
 npm run dev -- --host    # idem, acessível por outros aparelhos da rede (ex.: celular)
 npm run build            # tsc -b && vite build → dist/
 npm run preview          # serve o build de produção localmente
 npm run lint
 ```
 
-O endereço tem `/TCC/` no final porque o `vite.config.ts` define `base: '/TCC/'` (o site é publicado como *project page* do GitHub Pages). Ao abrir no celular, aceite o aviso de certificado. Para testar AR, prefira o site publicado, que tem HTTPS válido.
+O endereço tem `/CLARA.js/` no final porque o `vite.config.ts` define `base: '/CLARA.js/'` (o site é publicado como *project page* do GitHub Pages). Ao abrir no celular, aceite o aviso de certificado. Para testar AR, prefira o site publicado, que tem HTTPS válido.
 
 ## Deploy (GitHub Pages)
 

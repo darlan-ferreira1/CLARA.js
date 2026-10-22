@@ -71,7 +71,7 @@ const EXPERIMENTS: Partial<Record<Page, (theme: Theme) => ReactNode>> = {
 // Roteamento por hash: cada página tem uma URL própria (#/home, #/simple-pendulum…),
 // então o histórico do navegador (botão voltar/avançar) e links diretos funcionam.
 // Usa hash em vez de caminhos (/home) porque o GitHub Pages não reescreve rotas
-// desconhecidas para o index.html — um F5 em /TCC/home daria 404.
+// desconhecidas para o index.html — um F5 em /CLARA.js/home daria 404.
 function isPage(id: string): id is Page {
   return (PAGES as readonly string[]).includes(id);
 }

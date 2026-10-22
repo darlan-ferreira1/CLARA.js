@@ -13,7 +13,7 @@ const PROJECT = {
   institution: '',
   advisor: '',
   year: '2026',
-  repository: 'https://github.com/darlan-ferreira1/TCC',
+  repository: 'https://github.com/darlan-ferreira1/CLARA.js',
 };
 
 // As cinco iniciais do nome. Os três aspectos da proposta (aprendizagem,

@@ -298,7 +298,7 @@ Organizados pelas características de qualidade da ISO/IEC 25010. Requisitos mar
 | RP-01 | Linguagem TypeScript; interface em React; renderização 3D com Three.js. |
 | RP-02 | Realidade virtual e aumentada exclusivamente pela API WebXR (sem SDKs nativos ou lojas de aplicativos). |
 | RP-03 | Rastreamento das mãos com MediaPipe Tasks Vision (versão fixada em 1.0.1; o endereço do WASM acompanha a versão). |
-| RP-04 | Sem backend: hospedagem estática no GitHub Pages, com base de URL `/TCC/`. |
+| RP-04 | Sem backend: hospedagem estática no GitHub Pages, com base de URL `/CLARA.js/`. |
 | RP-05 | Navegação por *hash* (`#/…`), porque a hospedagem estática não redireciona rotas desconhecidas para o `index.html`. |
 | RP-06 | Contexto seguro (HTTPS) obrigatório para câmera e WebXR, inclusive no ambiente de desenvolvimento. |
 

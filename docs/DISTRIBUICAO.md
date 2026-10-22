@@ -142,13 +142,13 @@ pub fn run() {
 
 ### 4.3 Como o mesmo build atende o site e o app
 
-O site é publicado em `https://darlan-ferreira1.github.io/TCC/`, por isso o Vite gera os caminhos com o prefixo `/TCC/`. No app, os arquivos são servidos na raiz. O Tauri define a variável de ambiente `TAURI_ENV_PLATFORM` quando executa o build, e o `vite.config.ts` a usa para escolher a configuração:
+O site é publicado em `https://darlan-ferreira1.github.io/CLARA.js/`, por isso o Vite gera os caminhos com o prefixo `/CLARA.js/`. No app, os arquivos são servidos na raiz. O Tauri define a variável de ambiente `TAURI_ENV_PLATFORM` quando executa o build, e o `vite.config.ts` a usa para escolher a configuração:
 
 ```ts
 const tauri = !!process.env.TAURI_ENV_PLATFORM
 
 export default defineConfig({
-  base: tauri ? '/' : '/TCC/',
+  base: tauri ? '/' : '/CLARA.js/',
   plugins: [react(), tailwindcss(), ...(tauri ? [] : [basicSsl()])],
   // ...
 })
@@ -156,7 +156,7 @@ export default defineConfig({
 
 | | Site (`npm run build`) | App (`npm run tauri build`) |
 |---|---|---|
-| Caminho base | `/TCC/` | `/` |
+| Caminho base | `/CLARA.js/` | `/` |
 | HTTPS autoassinado no dev | sim (câmera/WebXR exigem) | não (o WebView recusaria o certificado; `localhost` já é seguro) |
 | Código-fonte (`src/`) | o mesmo | o mesmo |
 
@@ -222,9 +222,9 @@ No app Tauri, o site já está embutido. Só os experimentos de webcam ainda pre
 
 ## 6. Android com TWA (planejado)
 
-1. Com a PWA pronta (seção 5), gerar o projeto Android com o **Bubblewrap** (CLI do Google) ou o **PWABuilder**, apontando para `https://darlan-ferreira1.github.io/TCC/`.
+1. Com a PWA pronta (seção 5), gerar o projeto Android com o **Bubblewrap** (CLI do Google) ou o **PWABuilder**, apontando para `https://darlan-ferreira1.github.io/CLARA.js/`.
 2. Criar a chave de assinatura (*keystore*) do app. Ela é necessária para todas as atualizações futuras e precisa ser guardada em lugar seguro, fora do repositório.
-3. Publicar o `assetlinks.json` com a impressão digital da chave. Ele precisa ficar na **raiz** do domínio (`darlan-ferreira1.github.io/.well-known/assetlinks.json`), e o site está em `/TCC/`. A solução é criar o repositório `darlan-ferreira1.github.io` só para esse arquivo. Sem ele, a TWA funciona, mas mostra a barra de endereço.
+3. Publicar o `assetlinks.json` com a impressão digital da chave. Ele precisa ficar na **raiz** do domínio (`darlan-ferreira1.github.io/.well-known/assetlinks.json`), e o site está em `/CLARA.js/`. A solução é criar o repositório `darlan-ferreira1.github.io` só para esse arquivo. Sem ele, a TWA funciona, mas mostra a barra de endereço.
 4. Gerar o `.apk` e testar no aparelho: RA, câmera, Museu Virtual (joystick) e modo avião.
 
 Requisito do aparelho: Chrome instalado e, para a RA, ARCore. São os mesmos requisitos da RA no site.
@@ -241,7 +241,7 @@ A seção de downloads é a página **Releases** do repositório. Cada versão (
 4. o workflow **Instaladores** gera os arquivos de Windows e Linux e cria uma Release em **rascunho**;
 5. revisar o rascunho em *Releases* e clicar em **Publish release**. O APK (seção 6) pode ser anexado manualmente na mesma Release.
 
-Link permanente para a versão mais recente: `https://github.com/darlan-ferreira1/TCC/releases/latest`.
+Link permanente para a versão mais recente: `https://github.com/darlan-ferreira1/CLARA.js/releases/latest`.
 
 | Sistema | Arquivo recomendado |
 |---|---|

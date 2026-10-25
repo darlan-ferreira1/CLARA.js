@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.darlanferreira1.clarajs",
+      "sha256_cert_fingerprints": [
+        "93:AD:87:C9:23:5B:1A:CD:8A:61:FC:64:DD:B1:38:47:04:57:2C:04:72:36:D1:AE:BD:94:4D:26:C3:FB:3F:BC"
+      ]
+    }
+  }
+]

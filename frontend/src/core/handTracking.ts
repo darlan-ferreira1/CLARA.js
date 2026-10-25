@@ -11,9 +11,14 @@
 
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 
-// A versão do WASM precisa ser a mesma do pacote @mediapipe/tasks-vision.
-const WASM_BASE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm';
-const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+// Motor (WASM) e modelo servidos pelo próprio site, não por CDN: assim o
+// rastreamento funciona offline (service worker, app de desktop, APK).
+// Os arquivos são copiados para public/mediapipe/ por
+// scripts/mediapipe-assets.mjs antes do dev/build, então a versão do WASM é
+// sempre a do pacote @mediapipe/tasks-vision instalado.
+const MEDIAPIPE_BASE = `${import.meta.env.BASE_URL}mediapipe`;
+const WASM_BASE = `${MEDIAPIPE_BASE}/wasm`;
+const MODEL_URL = `${MEDIAPIPE_BASE}/hand_landmarker.task`;
 
 export interface Landmark { x: number; y: number; z: number; }
 export type Hand = Landmark[];

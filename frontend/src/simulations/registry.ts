@@ -4,6 +4,9 @@ export interface SimulationMeta {
   description: string;
   category: 'Química' | 'Física' | 'Biologia';
   available: boolean;
+  // Variante que exige WebXR (realidade virtual imersiva ou aumentada). O app de
+  // desktop não tem WebXR, então a Galeria dele mostra essas como "só no site".
+  xr?: 'vr' | 'ar';
   thumbnail?: string; // caminho relativo a /public, ex: '/thumbnails/bohr-model.png'
   // Pasta do experimento dentro de src/simulations/. A moldura (ExperimentShell)
   // carrega dali o teoria.md (botão Teoria) e o README.md (botão Como foi feito).
@@ -28,6 +31,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Mergulhe dentro do átomo em realidade virtual. Elétrons orbitam ao seu redor em escala real. Requer headset VR.',
     category: 'Química',
     available: true,
+    xr: 'vr',
     folder: 'chemistry/xrBhorModel',
     theoryFolder: 'chemistry/BohrModel',
   },
@@ -37,6 +41,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Posicione o átomo sobre uma mesa ou o chão pela câmera do celular e ajuste com os dedos: arraste, aumente e gire.',
     category: 'Química',
     available: true,
+    xr: 'ar',
     folder: 'chemistry/arBohrModel',
     theoryFolder: 'chemistry/BohrModel',
   },
@@ -54,6 +59,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Posicione moléculas em 3D sobre a sua mesa pela câmera do celular e observe as geometrias VSEPR de todos os ângulos.',
     category: 'Química',
     available: true,
+    xr: 'ar',
     folder: 'chemistry/arMolecularGeometry',
     theoryFolder: 'chemistry/MolecularGeometry',
   },
@@ -119,6 +125,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Explore a hélice de DNA em escala humana em realidade virtual. A estrutura tem mais de 10 metros de altura. Requer headset VR.',
     category: 'Biologia',
     available: true,
+    xr: 'vr',
     folder: 'biology/xrDnaHelix',
     theoryFolder: 'biology/DnaHelix',
   },
@@ -128,6 +135,7 @@ export const simulations: SimulationMeta[] = [
     description: 'Coloque a hélice de DNA sobre uma superfície real pela câmera do celular, redimensione com pinça e caminhe ao redor dela.',
     category: 'Biologia',
     available: true,
+    xr: 'ar',
     folder: 'biology/arDnaHelix',
     theoryFolder: 'biology/DnaHelix',
   },

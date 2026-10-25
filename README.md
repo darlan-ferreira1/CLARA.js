@@ -6,6 +6,19 @@ Os experimentos rodam inteiramente no navegador, sem instalação e sem servidor
 
 Site publicado: https://darlan-ferreira1.github.io/CLARA.js/
 
+## Downloads
+
+O CLARA.js também pode ser **instalado** e usado **sem internet**. As versões ficam na página de [**Releases**](https://github.com/darlan-ferreira1/CLARA.js/releases/latest).
+
+| Sistema | Arquivo | Observações |
+|---|---|---|
+| **Windows** | `CLARA_<versão>_x64-setup.exe` (ou o `.msi`) | Tudo do site, offline desde a instalação. A realidade aumentada e a virtual imersiva ficam no site, porque não existem no PC. |
+| **Linux** | `.AppImage` (qualquer distribuição) ou `.deb` (Debian/Ubuntu) | Igual ao Windows. AppImage: `chmod +x` no arquivo e depois executá-lo. |
+| **Android** | `.apk` | Tudo do site, **inclusive a realidade aumentada**. Requer o Chrome. Offline depois do primeiro uso. |
+| **Navegador** | — | No Chrome ou no Edge, use **"Instalar app"** na barra de endereço. Offline depois do primeiro acesso. |
+
+> Os instaladores não têm assinatura digital paga. No Windows, o SmartScreen pode mostrar "O Windows protegeu o computador": clique em **Mais informações → Executar assim mesmo**. No Android, permita a instalação de apps de fontes desconhecidas.
+
 ## A proposta
 
 A contribuição do trabalho para a Ciência da Computação é a **arquitetura de software** da plataforma: uma forma de organizar experimentos científicos para que **o mesmo modelo** funcione em diferentes formas de apresentação e de interação. O site é a prova de conceito dessa arquitetura.
@@ -49,6 +62,10 @@ Os requisitos funcionais e não funcionais da plataforma estão em [`docs/REQUIS
 - **MediaPipe Tasks Vision**: rastreamento das mãos pela webcam, direto no dispositivo
 - **marked**: renderiza os textos em Markdown (Teoria / Como foi feito)
 - **@vitejs/plugin-basic-ssl**: HTTPS no servidor de desenvolvimento (câmera e WebXR exigem contexto seguro)
+- **vite-plugin-pwa** (Workbox): manifesto e service worker, para o site ser instalável e funcionar offline
+- **@fontsource**: fontes servidas pelo próprio site, para funcionarem offline
+- **Tauri 2**: app de desktop (Windows e Linux) que exibe o mesmo build no WebView do sistema
+- **Bubblewrap** (TWA): app Android que abre o site no motor do Chrome
 - Deploy automático no **GitHub Pages** via GitHub Actions
 
 ## Arquitetura
@@ -91,7 +108,9 @@ src/
 │   ├── mountable.ts        # contrato montável
 │   ├── hostInPage.ts       # hospedeiro "página"
 │   ├── controls.ts         # controles declarativos (ControlDef)
-│   └── handTracking.ts     # rastreamento de mãos (MediaPipe), comum aos experimentos de webcam
+│   ├── handTracking.ts     # rastreamento de mãos (MediaPipe), comum aos experimentos de webcam
+│   ├── offline.ts          # registra o service worker (modo offline / PWA)
+│   └── platform.ts         # detecta o app de desktop (sem WebXR)
 ├── components/
 │   ├── ExperimentShell/    # moldura de todo experimento: Teoria / Como foi feito / Voltar
 │   ├── ControlsHud/        # painel de ajustes gerado a partir de ControlDef
@@ -135,6 +154,17 @@ npm run lint
 
 O endereço tem `/CLARA.js/` no final porque o `vite.config.ts` define `base: '/CLARA.js/'` (o site é publicado como *project page* do GitHub Pages). Ao abrir no celular, aceite o aviso de certificado. Para testar AR, prefira o site publicado, que tem HTTPS válido.
 
+Antes do `dev` e do `build`, o script `scripts/mediapipe-assets.mjs` copia o motor do MediaPipe para `public/mediapipe/` e baixa o modelo da mão (só na primeira vez). Isso permite que o rastreamento funcione offline. O service worker (modo offline do site) só existe no build de produção: use `npm run build` + `npm run preview` para testá-lo.
+
+### Apps instaláveis
+
+| Plataforma | Onde | Como gerar |
+|---|---|---|
+| Windows / Linux | `frontend/src-tauri/` (Tauri 2) | `npm run tauri build` em `frontend/` (o Linux só compila em Linux: use o workflow **Instaladores**) |
+| Android | `android/` (TWA, Bubblewrap) | ver [`android/README.md`](android/README.md) |
+
+Publicar uma versão: aumente `version` em `frontend/src-tauri/tauri.conf.json`, faça o commit e envie uma tag (`git tag v0.1.0`, `git push origin v0.1.0`). O workflow `.github/workflows/instaladores.yml` cria uma Release em rascunho com os instaladores de Windows e Linux; anexe o APK e publique. Detalhes em [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md).
+
 ## Deploy (GitHub Pages)
 
 O workflow `.github/workflows/deploy.yml` roda a cada push na `main`: instala as dependências, executa `npm run build` em `frontend/` e publica `frontend/dist` no GitHub Pages. Nenhum comando manual é necessário.
@@ -144,6 +174,7 @@ Se o repositório for renomeado, o `base` do `vite.config.ts` precisa mudar junt
 ## Limitações conhecidas
 
 - **Realidade aumentada:** só no Android com Chrome e ARCore (o Safari do iPhone não implementa WebXR AR).
-- **Experimentos de webcam:** o modelo do MediaPipe é baixado de CDN na primeira vez; sem internet, o mouse funciona como alternativa.
+- **Primeiro acesso ao site:** o service worker guarda cerca de 31 MB no aparelho (a maior parte é o MediaPipe), para que tudo funcione offline depois.
+- **Experimentos de webcam:** sem câmera, o mouse funciona como alternativa.
 - **Bundle:** o pacote de produção passa de 500 kB por concentrar Three.js e todos os experimentos num único arquivo; carregar cada experimento sob demanda (`React.lazy`) resolveria.
 - **Código não utilizado:** `src/components/ui/ExperimentCard.tsx` e `ExperimentDetails.tsx` não são usados pelo fluxo atual.

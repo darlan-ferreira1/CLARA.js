@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { simulations, type SimulationMeta } from '../simulations/registry';
+import { isNativeApp } from '../core/platform';
 
 const MOBILE_BREAKPOINT = 640;
 
@@ -487,7 +488,10 @@ export default function Home({ onNavigate, onGoMuseum, onGoSobre, theme, onToggl
 function SimCard({ sim, onClick }: { sim: SimulationMeta; onClick: () => void }) {
   const accent   = CATEGORY_ACCENT[sim.category]   ?? '#aaa';
   const gradient = CATEGORY_GRADIENT[sim.category] ?? 'linear-gradient(135deg, #111 0%, #222 100%)';
-  const available = sim.available;
+  // No app de desktop não há WebXR: as variantes RA/RV aparecem, mas
+  // desativadas e com a explicação de onde usá-las.
+  const webOnly = isNativeApp && !!sim.xr;
+  const available = sim.available && !webOnly;
 
   return (
     <button
@@ -573,7 +577,7 @@ function SimCard({ sim, onClick }: { sim: SimulationMeta; onClick: () => void })
             padding: '3px 8px',
             borderRadius: 6,
           }}>
-            EM BREVE
+            {webOnly ? 'SÓ NO SITE' : 'EM BREVE'}
           </span>
         )}
       </div>
@@ -589,6 +593,13 @@ function SimCard({ sim, onClick }: { sim: SimulationMeta; onClick: () => void })
         {available && (
           <span style={{ fontSize: 12, color: accent, fontWeight: 500, marginTop: 4 }}>
             Abrir simulação →
+          </span>
+        )}
+        {webOnly && (
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+            {sim.xr === 'ar'
+              ? 'Realidade aumentada: abra pelo site ou pelo app Android, no celular.'
+              : 'Realidade virtual imersiva: abra pelo site no Chrome, com um headset.'}
           </span>
         )}
       </div>

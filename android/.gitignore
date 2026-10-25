@@ -1,0 +1,11 @@
+# Saídas da compilação (geradas por "bubblewrap build")
+*.apk
+*.aab
+*.idsig
+.gradle/
+build/
+app/build/
+local.properties
+# A chave de assinatura NUNCA entra no Git (fica em D:\26\chaves-clarajs)
+*.keystore
+*.jks

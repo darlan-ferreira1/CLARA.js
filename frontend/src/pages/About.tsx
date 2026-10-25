@@ -4,6 +4,7 @@
 
 import type { ReactNode } from 'react';
 import { simulations } from '../simulations/registry';
+import { DOWNLOADS_URL, isNativeApp } from '../core/platform';
 
 // Dados do trabalho. Campos vazios não aparecem na página — preencha
 // instituição e orientador(a) quando quiser exibi-los.
@@ -31,6 +32,14 @@ const TECH = [
   { name: 'WebXR', text: 'realidade virtual e aumentada sem instalar aplicativos' },
   { name: 'MediaPipe', text: 'rastreamento das mãos pela webcam, direto no dispositivo' },
   { name: 'React + TypeScript', text: 'interface e organização do código' },
+];
+
+// Versões instaláveis (arquivos publicados nas Releases do GitHub).
+const DOWNLOADS = [
+  { name: 'Windows', text: 'Instalador CLARA_…_x64-setup.exe. Realidade aumentada e virtual imersiva ficam no site.' },
+  { name: 'Linux', text: 'Arquivo .AppImage (qualquer distribuição) ou .deb (Debian/Ubuntu).' },
+  { name: 'Android', text: 'Arquivo .apk, com tudo do site, inclusive a realidade aumentada (requer o Chrome).' },
+  { name: 'Navegador', text: 'No Chrome ou no Edge, use "Instalar app" na barra de endereço.' },
 ];
 
 // Contagem de salas interativas sem carregar os módulos (glob não-eager).
@@ -156,6 +165,29 @@ export default function About({ onBack, onGoGallery, onGoMuseum }: Props) {
             />
           </div>
         </Section>
+
+        {/* Baixar o app (não aparece dentro do próprio app de desktop) */}
+        {!isNativeApp && (
+          <Section title="Instalar o CLARA.js">
+            <p style={paragraph}>
+              Além do site, o CLARA.js pode ser instalado e usado <strong>sem internet</strong> — útil em escolas
+              com conexão instável. Depois do primeiro acesso, o próprio site também passa a abrir offline.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, marginTop: 16 }}>
+              {DOWNLOADS.map((d) => (
+                <div key={d.name} style={{ ...card, padding: '12px 16px' }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{d.name}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.5 }}>{d.text}</div>
+                </div>
+              ))}
+            </div>
+            <p style={{ ...paragraph, marginTop: 18 }}>
+              <a href={DOWNLOADS_URL} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-quimica)', fontWeight: 600 }}>
+                Baixar a versão mais recente →
+              </a>
+            </p>
+          </Section>
+        )}
 
         {/* Tecnologias */}
         <Section title="Tecnologias">

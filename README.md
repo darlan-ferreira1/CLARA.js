@@ -50,9 +50,6 @@ A contribuição do trabalho para a Ciência da Computação é a **arquitetura 
 - **Webcam:** sem câmera, o mouse funciona como alternativa.
 
 Cada pasta de experimento tem um `README.md` explicando em detalhe como ele foi feito e um `teoria.md` com o conteúdo para o aluno. Os dois aparecem dentro do próprio site.
-
-Os requisitos funcionais e não funcionais da plataforma estão em [`docs/REQUISITOS.md`](docs/REQUISITOS.md). A versão instalável (Windows, Linux e Android) e o funcionamento offline estão descritos em [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md).
-
 ## Stack
 
 - **React 19** + **TypeScript**: interface e composição das páginas
@@ -156,14 +153,85 @@ O endereço tem `/CLARA.js/` no final porque o `vite.config.ts` define `base: '/
 
 Antes do `dev` e do `build`, o script `scripts/mediapipe-assets.mjs` copia o motor do MediaPipe para `public/mediapipe/` e baixa o modelo da mão (só na primeira vez). Isso permite que o rastreamento funcione offline. O service worker (modo offline do site) só existe no build de produção: use `npm run build` + `npm run preview` para testá-lo.
 
-### Apps instaláveis
+## Compilando os apps instaláveis
 
-| Plataforma | Onde | Como gerar |
-|---|---|---|
-| Windows / Linux | `frontend/src-tauri/` (Tauri 2) | `npm run tauri build` em `frontend/` (o Linux só compila em Linux: use o workflow **Instaladores**) |
-| Android | `android/` (TWA, Bubblewrap) | ver [`android/README.md`](android/README.md) |
+Os apps de Windows e Linux usam o **Tauri 2** (`frontend/src-tauri/`) e exibem o mesmo build do site. O app Android é uma **TWA** (`android/`), que abre o site publicado. Cada sistema só compila no próprio sistema: o Linux não compila no Windows, e vice-versa.
 
-Publicar uma versão: aumente `version` em `frontend/src-tauri/tauri.conf.json`, faça o commit e envie uma tag (`git tag v0.1.0`, `git push origin v0.1.0`). O workflow `.github/workflows/instaladores.yml` cria uma Release em rascunho com os instaladores de Windows e Linux; anexe o APK e publique. Detalhes em [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md).
+### Windows
+
+Pré-requisitos (uma vez só): Node.js 22, Rust e o Visual Studio Build Tools com a carga **"Desenvolvimento para desktop com C++"**.
+
+```powershell
+winget install Rustlang.Rustup
+winget install Microsoft.VisualStudio.2022.BuildTools   # marque "Desenvolvimento para desktop com C++"
+```
+
+Depois, abra um terminal novo e, dentro de `frontend/`:
+
+```powershell
+npm install
+npm run tauri build
+```
+
+Os instaladores ficam em `frontend/src-tauri/target/release/bundle/`:
+
+- `nsis/CLARA_<versão>_x64-setup.exe`
+- `msi/CLARA_<versão>_x64_pt-BR.msi`
+
+Para abrir o app em modo de desenvolvimento: `npm run tauri dev`.
+
+### Linux
+
+**Pelo GitHub (sem precisar de Linux):** aba **Actions → Instaladores → Run workflow**. Ao terminar, os arquivos de Linux e de Windows aparecem em uma Release em rascunho.
+
+**Em uma máquina Linux** (Ubuntu, Debian, Mint, Zorin e similares), instale os pré-requisitos uma vez só:
+
+```bash
+sudo apt update
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+```
+
+Também é preciso ter o Node.js 22. Depois, dentro de `frontend/`:
+
+```bash
+npm install
+npm run tauri build
+```
+
+Os instaladores ficam em `frontend/src-tauri/target/release/bundle/`:
+
+- `deb/CLARA_<versão>_amd64.deb`
+- `appimage/CLARA_<versão>_amd64.AppImage`
+- `rpm/CLARA-<versão>-1.x86_64.rpm`
+
+A câmera no Linux depende de um trecho do `src-tauri/src/lib.rs` que só compila nesse sistema.
+
+### Android
+
+Pré-requisitos: Node.js, o Bubblewrap (`npm install -g @bubblewrap/cli`) e a chave de assinatura do app, que não fica no repositório. Na primeira execução, o Bubblewrap oferece baixar o JDK 17 e o Android SDK.
+
+O APK não contém o site: ele abre o endereço publicado. Por isso, mudanças nos experimentos chegam ao app só com o deploy, sem gerar o APK de novo.
+
+No **PowerShell**, dentro de `android/`:
+
+```powershell
+$env:BUBBLEWRAP_KEYSTORE_PASSWORD = '<senha da chave>'
+$env:BUBBLEWRAP_KEY_PASSWORD      = '<senha da chave>'
+bubblewrap build --skipPwaValidation
+```
+
+O resultado é o `android/app-release-signed.apk`. Para instalar no celular, ligue a **Depuração USB** nas Opções do desenvolvedor e conecte o cabo:
+
+```powershell
+adb install android\app-release-signed.apk
+```
+
+Use o cabo porque, desde setembro de 2026, o Android no Brasil pode bloquear ou atrasar em 24 horas a instalação de um APK copiado para o celular, quando o desenvolvedor não é verificado; o `adb` não passa por essa verificação. Para mudar o nome, o ícone ou a versão do app, veja [`android/README.md`](android/README.md).
+
+### Publicar uma versão
+
+Aumente `version` em `frontend/src-tauri/tauri.conf.json`, faça o commit e envie uma tag (`git tag v0.1.0`, `git push origin v0.1.0`). O workflow `.github/workflows/instaladores.yml` cria uma Release em rascunho com os instaladores de Windows e Linux. Anexe o APK e publique.
 
 ## Deploy (GitHub Pages)
 

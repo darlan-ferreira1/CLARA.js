@@ -1,6 +1,6 @@
 # App Android do CLARA.js (TWA)
 
-Projeto Android gerado pelo [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap). É uma **Trusted Web Activity**: um APK que abre o site publicado (`https://darlan-ferreira1.github.io/CLARA.js/`) no **Chrome do aparelho**, em tela cheia. Como o motor é o Chrome de verdade, tudo do site funciona: realidade aumentada (WebXR + ARCore), realidade virtual, webcam e Museu Virtual. Depois do primeiro acesso, o service worker do site (PWA) faz o app funcionar sem internet. Detalhes e justificativa em [`docs/DISTRIBUICAO.md`](../docs/DISTRIBUICAO.md), seção 6.
+Projeto Android gerado pelo [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap). É uma **Trusted Web Activity**: um APK que abre o site publicado (`https://darlan-ferreira1.github.io/CLARA.js/`) no **Chrome do aparelho**, em tela cheia. Como o motor é o Chrome de verdade, tudo do site funciona: realidade aumentada (WebXR + ARCore), realidade virtual, webcam e Museu Virtual. Depois do primeiro acesso, o service worker do site (PWA) faz o app funcionar sem internet.
 
 Não há código do CLARA.js aqui: é só o "lançador". Quem define o app é o `twa-manifest.json`; o restante (`app/`, `build.gradle`, `gradlew`…) é **gerado** a partir dele.
 

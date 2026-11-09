@@ -22,7 +22,8 @@ export const DEFAULT_DEADZONE = 0.15;
 export type GamepadButton =
   | 'a' | 'b' | 'x' | 'y'
   | 'lb' | 'rb' | 'lt' | 'rt'
-  | 'select' | 'start' | 'leftStick' | 'rightStick';
+  | 'select' | 'start' | 'leftStick' | 'rightStick'
+  | 'dpadUp' | 'dpadDown' | 'dpadLeft' | 'dpadRight';
 
 export interface GamepadLayout {
   moveX: number; // índice do eixo (navigator.getGamepads()[i].axes)
@@ -38,6 +39,7 @@ export const STANDARD_LAYOUT: GamepadLayout = {
     a: 0, b: 1, x: 2, y: 3,
     lb: 4, rb: 5, lt: 6, rt: 7,
     select: 8, start: 9, leftStick: 10, rightStick: 11,
+    dpadUp: 12, dpadDown: 13, dpadLeft: 14, dpadRight: 15,
   },
 };
 
@@ -96,6 +98,40 @@ export function readFrame(
     justReleased: (b) => !pressed.has(b) && previous.has(b),
   };
   return { frame, pressed };
+}
+
+export type GamepadDirection = 'up' | 'down' | 'left' | 'right';
+
+// Direção para navegar em menus: D-pad ou analógico esquerdo bem inclinado.
+export function frameDirection(frame: GamepadFrame): GamepadDirection | null {
+  if (frame.pressed('dpadUp')) return 'up';
+  if (frame.pressed('dpadDown')) return 'down';
+  if (frame.pressed('dpadLeft')) return 'left';
+  if (frame.pressed('dpadRight')) return 'right';
+  const { x, y } = frame.move;
+  if (Math.max(Math.abs(x), Math.abs(y)) < 0.5) return null;
+  if (Math.abs(x) > Math.abs(y)) return x > 0 ? 'right' : 'left';
+  return y > 0 ? 'up' : 'down';
+}
+
+// Repetição ao segurar, como numa tecla: dispara ao apertar e, depois de
+// `delay` segundos, a cada `interval` segundos. Devolve a direção nos quadros
+// em que deve disparar e null nos demais.
+export function createDirectionRepeat(delay = 0.35, interval = 0.08) {
+  let held: GamepadDirection | null = null;
+  let wait = 0;
+  return (direction: GamepadDirection | null, dt: number): GamepadDirection | null => {
+    if (direction !== held) {
+      held = direction;
+      wait = delay;
+      return direction;
+    }
+    if (!direction) return null;
+    wait -= dt;
+    if (wait > 0) return null;
+    wait = interval;
+    return direction;
+  };
 }
 
 export interface GamepadReader {

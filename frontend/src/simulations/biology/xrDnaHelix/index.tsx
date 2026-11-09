@@ -70,7 +70,7 @@ export default function XRDnaHelixSimulation() {
           backdropFilter: 'blur(4px)', zIndex: 10, textAlign: 'center',
           pointerEvents: 'none',
         }}>
-          Em VR: gatilho direito ou A → +2 pares · gatilho esquerdo ou B → −2 pares · com controle, os analógicos andam e giram, RT/LT sobem e descem
+          Em VR: gatilho direito ou A → +2 pares · gatilho esquerdo ou B → −2 pares · com controle, o analógico esquerdo anda, o direito olha, Y corre, RT/LT sobem e descem
         </div>
       </div>
 

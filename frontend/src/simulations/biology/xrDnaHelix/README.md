@@ -65,7 +65,8 @@ slider (6–30, passo 2) ──────────────────�
 | Desktop | Mouse | OrbitControls |
 | VR | Gatilho do controle 0 | +2 pares (máx. 30) |
 | VR | Gatilho do controle 1 | −2 pares (mín. 6) |
-| VR com controle de videogame | Analógico esquerdo / direito | Anda na direção do olhar / gira o corpo (`core/gamepadRig.ts`) |
+| VR com controle de videogame | Analógico esquerdo / direito | Anda na direção do olhar / olha para os lados, para cima e para baixo (`core/gamepadRig.ts`) |
+| VR com controle de videogame | Y (segurar) | Corre |
 | VR com controle de videogame | RT / LT | Sobe / desce ao longo da hélice |
 | VR com controle de videogame | A / B | +2 / −2 pares |
 

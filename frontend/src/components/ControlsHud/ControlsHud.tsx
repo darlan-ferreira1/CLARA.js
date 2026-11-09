@@ -15,9 +15,12 @@ interface Props {
   onChange: (id: string, value: ControlValue) => void;
   onClose: () => void;
   closeLabel: string;
+  // Controle de videogame: linha selecionada e dica de uso (opcionais).
+  focusedId?: string;
+  hint?: string;
 }
 
-export default function ControlsHud({ title, controls, values, compact, onChange, onClose, closeLabel }: Props) {
+export default function ControlsHud({ title, controls, values, compact, onChange, onClose, closeLabel, focusedId, hint }: Props) {
   return (
     <div
       role="dialog"
@@ -38,7 +41,13 @@ export default function ControlsHud({ title, controls, values, compact, onChange
       </div>
 
       {controls.map((c) => (
-        <label key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
+        <label
+          key={c.id}
+          style={{
+            display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, borderRadius: 4,
+            outline: c.id === focusedId ? '2px solid var(--primary)' : 'none', outlineOffset: 4,
+          }}
+        >
           <span style={{ color: 'var(--text-muted)' }}>
             {c.label}
             {c.kind === 'range' && (
@@ -68,6 +77,8 @@ export default function ControlsHud({ title, controls, values, compact, onChange
           )}
         </label>
       ))}
+
+      {hint && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{hint}</div>}
 
       <button
         onClick={onClose}

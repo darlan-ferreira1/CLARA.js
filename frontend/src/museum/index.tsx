@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createMuseumScene, type MuseumScene, type RoomInfo } from './scene';
 import { EXIT_DOOR_ID, type DoorEntry, type DoorPlacement } from './layout';
 import type { InteractiveRoom } from './interactiveRoom';
-import type { ControlValue } from '../core/controls';
+import { stepControl, type ControlValue } from '../core/controls';
+import type { GamepadDirection } from '../core/gamepad';
 import { simulations } from '../simulations/registry';
 import TouchControls from './TouchControls';
 import ControlsHud from '../components/ControlsHud/ControlsHud';
@@ -62,6 +63,7 @@ const TOUCH_HELP = [
 ];
 
 const GAMEPAD_HELP = 'Controle: analógico esquerdo anda, direito olha, A entra ou segura, Start abre os ajustes, Select pausa. Aperte A para começar.';
+const GAMEPAD_HUD_HINT = 'Controle: ↑ ↓ escolhe, ← → ajusta, B fecha.';
 
 const kbdStyle = {
   border: '1px solid #666', borderRadius: 4, padding: '1px 7px',
@@ -97,6 +99,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   const [interaction, setInteraction] = useState<string | null>(null);
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [hudOpen, setHudOpen] = useState(false);
+  const [padFocus, setPadFocus] = useState(0); // linha do HUD selecionada pelo controle
+  const padHudInput = useRef<((direction: GamepadDirection) => void) | null>(null);
   const playing = locked || touchPlaying || padPlaying;
 
   function pauseTouch() {
@@ -130,6 +134,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         setHudOpen(false);
         setPadPlaying(true);
       } else if (action === 'menu') {
+        setPadFocus(0);
         setHudOpen(true);
         s.unlock(); // no desktop, solta o mouse para usar o HUD
       } else {
@@ -139,6 +144,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         s.unlock();
       }
     };
+    s.onGamepadHud = (direction) => padHudInput.current?.(direction);
     s.onNearDoorChange = setNearDoor;
     s.onInteractionChange = setInteraction;
     s.onRoomChange = (r) => {
@@ -155,10 +161,26 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
 
-  // O controle só move a cena enquanto se está jogando com ele e sem HUD aberto.
+  // Com o HUD aberto, o controle navega nele; fora dele, só move a cena
+  // enquanto se está jogando com o controle.
   useEffect(() => {
-    sceneRef.current?.setGamepadEnabled(padPlaying && !hudOpen);
-  }, [padPlaying, hudOpen, theme]);
+    sceneRef.current?.setGamepadMode(room && hudOpen ? 'hud' : padPlaying ? 'play' : 'off');
+  }, [room, padPlaying, hudOpen, theme]);
+
+  // ↑ ↓ escolhe o parâmetro; ← → altera o valor dele.
+  useEffect(() => {
+    padHudInput.current = (direction) => {
+      const count = room?.controls.length ?? 0;
+      if (!room || count === 0) return;
+      setPadPlaying(true);
+      if (direction === 'up' || direction === 'down') {
+        setPadFocus((i) => (i + (direction === 'down' ? 1 : -1) + count) % count);
+      } else {
+        const control = room.controls[Math.min(padFocus, count - 1)];
+        changeControl(control.id, stepControl(control, room.values[control.id], direction === 'right' ? 1 : -1));
+      }
+    };
+  });
 
   // Desktop: Tab abre o HUD de ajustes dentro de uma sala (solta o mouse);
   // Esc com o HUD aberto volta para a tela de pausa.
@@ -276,6 +298,8 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
           onChange={changeControl}
           onClose={closeHud}
           closeLabel="Voltar à sala"
+          focusedId={padPlaying ? room.controls[Math.min(padFocus, room.controls.length - 1)]?.id : undefined}
+          hint={padPlaying ? GAMEPAD_HUD_HINT : undefined}
         />
       )}
 

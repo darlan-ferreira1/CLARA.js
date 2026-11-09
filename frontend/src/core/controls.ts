@@ -29,6 +29,20 @@ export interface SelectControl extends BaseControl {
 
 export type ControlDef = RangeControl | SelectControl;
 
+// Valor seguinte de um controle (direction = +1 ou -1), para quem ajusta por
+// passos em vez de arrastar, como o controle de videogame: o range anda um
+// `step` e para nos limites; o select percorre as opções em círculo.
+export function stepControl(control: ControlDef, value: ControlValue, direction: 1 | -1): ControlValue {
+  if (control.kind === 'select') {
+    const n = control.options.length;
+    const current = control.options.findIndex((o) => o.value === value);
+    return control.options[(current + direction + n) % n].value;
+  }
+  const stepped = Number(value) + direction * control.step;
+  const decimals = (String(control.step).split('.')[1] ?? '').length;
+  return Number(Math.min(Math.max(stepped, control.min), control.max).toFixed(decimals));
+}
+
 export function defaultValues(controls: ControlDef[]): ControlValues {
   return Object.fromEntries(controls.map((c) => [c.id, c.default]));
 }

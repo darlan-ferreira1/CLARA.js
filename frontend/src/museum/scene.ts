@@ -20,9 +20,10 @@
 // Controles (controle de videogame, core/gamepad.ts): analógico esquerdo anda,
 // direito olha, A = E, RT ou clicar o analógico esquerdo = correr, Start = HUD
 // de ajustes (dentro de uma sala), Select = pausa. O controle é mais uma fonte
-// do mesmo vetor de movimento e do mesmo giro de câmera do toque. Enquanto o
-// React não libera o controle (setGamepadEnabled), A ou Start só pedem para
-// começar (onGamepadAction('resume')).
+// do mesmo vetor de movimento e do mesmo giro de câmera do toque. Com o HUD
+// aberto, D-pad ou analógico esquerdo navegam (onGamepadHud) e B ou Start
+// fecham. Com o controle desligado (setGamepadMode('off')), A ou Start só
+// pedem para começar (onGamepadAction('resume')).
 //
 // Portas:
 //   - porta com sala interativa (sala.ts) → transição (tela escurece) e troca de
@@ -36,7 +37,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import type { ControlDef, ControlValue, ControlValues } from '../core/controls';
 import { defaultValues } from '../core/controls';
-import { createGamepadReader } from '../core/gamepad';
+import { createDirectionRepeat, createGamepadReader, frameDirection, type GamepadDirection } from '../core/gamepad';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
 import { buildHall, buildRoom, type Level } from './levels';
 import {
@@ -58,6 +59,8 @@ export interface RoomInfo {
   values: ControlValues;
 }
 
+export type GamepadMode = 'off' | 'play' | 'hud';
+
 export interface MuseumScene {
   // Precisa ser chamado dentro de um evento de clique (exigência do Pointer Lock).
   lock(): void;
@@ -72,14 +75,15 @@ export interface MuseumScene {
   interactRelease(): void;
   // HUD de ajustes da sala atual (camada A da sala interativa).
   setControl(id: string, value: ControlValue): void;
-  // Controle de videogame: só move a cena quando o React libera (jogando e
-  // sem HUD aberto). Desligado, A ou Start disparam onGamepadAction('resume').
-  setGamepadEnabled(enabled: boolean): void;
+  // Controle de videogame: 'play' move a cena, 'hud' navega nos ajustes e
+  // 'off' só espera A ou Start para disparar onGamepadAction('resume').
+  setGamepadMode(mode: GamepadMode): void;
 
   onLockChange: ((locked: boolean) => void) | null;
   // resume = começar/voltar a jogar; menu = abrir o HUD (só numa sala);
   // pause = pausar (Select ou controle desconectado).
   onGamepadAction: ((action: 'resume' | 'menu' | 'pause') => void) | null;
+  onGamepadHud: ((direction: GamepadDirection) => void) | null; // navegar no HUD
   onNearDoorChange: ((door: DoorPlacement | null) => void) | null;
   onEnter: ((doorId: string) => void) | null;          // abrir a PÁGINA do experimento
   onRoomChange: ((room: RoomInfo | null) => void) | null; // entrou/saiu de uma sala
@@ -177,7 +181,8 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   }
 
   const gamepad = createGamepadReader();
-  let gamepadEnabled = false;
+  const hudRepeat = createDirectionRepeat();
+  let gamepadMode: GamepadMode = 'off';
   let gamepadWasConnected = false;
 
   const api: MuseumScene = {
@@ -190,9 +195,9 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     touchLook(dx, dy) {
       rotateLook(-dx * TOUCH_LOOK_SPEED, -dy * TOUCH_LOOK_SPEED);
     },
-    setGamepadEnabled(enabled) {
-      gamepadEnabled = enabled;
-      if (!enabled) interactRelease();
+    setGamepadMode(mode) {
+      gamepadMode = mode;
+      if (mode !== 'play') interactRelease();
     },
     enterNearest() {
       if (currentDoor) goThroughDoor(currentDoor);
@@ -206,6 +211,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     },
     onLockChange: null,
     onGamepadAction: null,
+    onGamepadHud: null,
     onNearDoorChange: null,
     onEnter: null,
     onRoomChange: null,
@@ -367,9 +373,13 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     }
 
     const pad = gamepad.poll();
-    if (gamepadWasConnected && !pad.connected && gamepadEnabled) api.onGamepadAction?.('pause');
+    if (gamepadWasConnected && !pad.connected && gamepadMode !== 'off') api.onGamepadAction?.('pause');
     gamepadWasConnected = pad.connected;
-    if (pad.connected && gamepadEnabled) {
+    const hudDirection = hudRepeat(gamepadMode === 'hud' ? frameDirection(pad) : null, dt);
+    if (hudDirection) api.onGamepadHud?.(hudDirection);
+    if (gamepadMode === 'hud') {
+      if (pad.justPressed('b') || pad.justPressed('start')) api.onGamepadAction?.('resume');
+    } else if (pad.connected && gamepadMode === 'play') {
       forward += pad.move.y;
       strafe  += pad.move.x;
       if (pad.pressed('rt') || pad.pressed('leftStick')) speed = RUN_SPEED;

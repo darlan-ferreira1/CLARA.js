@@ -11,10 +11,13 @@
 // Interação XR:
 //   Gatilho direito (ctrl 0) → +2 pares de base.
 //   Gatilho esquerdo (ctrl 1) → −2 pares de base.
+// Com controle de videogame (core/gamepadRig.ts): os analógicos andam e giram
+// dentro da RV, RT/LT sobem e descem ao longo da hélice, A → +2, B → −2.
 
 import * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { createGamepadRig } from '../../../core/gamepadRig';
 
 const SCALE        = 2.5;
 const RADIUS_XR    = 1.5  * SCALE;   // 3.75 m
@@ -53,6 +56,9 @@ export function createXRDnaScene(container: HTMLDivElement): XRDnaScene {
   controls.dampingFactor = 0.08;
   renderer.xr.addEventListener('sessionstart', () => { controls.enabled = false; });
   renderer.xr.addEventListener('sessionend',   () => { controls.enabled = true; });
+
+  // Câmera dentro de um rig que o controle de videogame move durante a RV.
+  const rig = createGamepadRig(renderer, scene, camera);
 
   // ── Iluminação ──
   scene.add(new THREE.AmbientLight(0xffffff, 2.0));
@@ -124,7 +130,7 @@ export function createXRDnaScene(container: HTMLDivElement): XRDnaScene {
     labelCtx.fillText(`${bp} pares de base`, w / 2, 60);
     labelCtx.fillStyle = '#335533';
     labelCtx.font = '18px sans-serif';
-    labelCtx.fillText('◄ Gatilho esq.  Pares  Gatilho dir. ►', w / 2, 120);
+    labelCtx.fillText('◄ Gatilho esq. ou B  Pares  Gatilho dir. ou A ►', w / 2, 120);
     labelTex.needsUpdate = true;
   }
 
@@ -190,7 +196,7 @@ export function createXRDnaScene(container: HTMLDivElement): XRDnaScene {
       new THREE.Vector3(0, 0, -5),
     ]);
     ctrl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x44ff88, opacity: 0.4, transparent: true })));
-    scene.add(ctrl);
+    rig.group.add(ctrl); // acompanham o rig, como a câmera
   });
 
   // ── Estado ──
@@ -237,6 +243,9 @@ export function createXRDnaScene(container: HTMLDivElement): XRDnaScene {
   renderer.setAnimationLoop((t: number) => {
     const dt = Math.min((t - last) / 1000, 0.05);
     last = t;
+    const pad = rig.tick(dt);
+    if (pad.justPressed('a')) api.setBasePairs(currentBP + 2);
+    if (pad.justPressed('b')) api.setBasePairs(currentBP - 2);
     dnaGroup.rotation.y += 0.15 * dt * Math.PI * 2; // rotação lenta contínua
     controls.update();
     renderer.render(scene, camera);
@@ -245,6 +254,7 @@ export function createXRDnaScene(container: HTMLDivElement): XRDnaScene {
   function dispose() {
     renderer.setAnimationLoop(null);
     ro.disconnect();
+    rig.dispose();
     controls.dispose();
     sphereGeo.dispose();
     bgGeo.dispose();

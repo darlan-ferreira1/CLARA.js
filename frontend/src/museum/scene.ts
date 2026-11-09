@@ -17,6 +17,13 @@
 // interactPress/interactRelease. Teclado e joystick viram o mesmo vetor
 // (frente, lado) no loop — a cena não se importa com a origem da entrada.
 //
+// Controles (controle de videogame, core/gamepad.ts): analógico esquerdo anda,
+// direito olha, A = E, RT ou clicar o analógico esquerdo = correr, Start = HUD
+// de ajustes (dentro de uma sala), Select = pausa. O controle é mais uma fonte
+// do mesmo vetor de movimento e do mesmo giro de câmera do toque. Enquanto o
+// React não libera o controle (setGamepadEnabled), A ou Start só pedem para
+// começar (onGamepadAction('resume')).
+//
 // Portas:
 //   - porta com sala interativa (sala.ts) → transição (tela escurece) e troca de
 //     fase dentro da MESMA cena e do MESMO renderer;
@@ -29,6 +36,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import type { ControlDef, ControlValue, ControlValues } from '../core/controls';
 import { defaultValues } from '../core/controls';
+import { createGamepadReader } from '../core/gamepad';
 import type { InteractiveRoom, RoomInteraction } from './interactiveRoom';
 import { buildHall, buildRoom, type Level } from './levels';
 import {
@@ -64,8 +72,14 @@ export interface MuseumScene {
   interactRelease(): void;
   // HUD de ajustes da sala atual (camada A da sala interativa).
   setControl(id: string, value: ControlValue): void;
+  // Controle de videogame: só move a cena quando o React libera (jogando e
+  // sem HUD aberto). Desligado, A ou Start disparam onGamepadAction('resume').
+  setGamepadEnabled(enabled: boolean): void;
 
   onLockChange: ((locked: boolean) => void) | null;
+  // resume = começar/voltar a jogar; menu = abrir o HUD (só numa sala);
+  // pause = pausar (Select ou controle desconectado).
+  onGamepadAction: ((action: 'resume' | 'menu' | 'pause') => void) | null;
   onNearDoorChange: ((door: DoorPlacement | null) => void) | null;
   onEnter: ((doorId: string) => void) | null;          // abrir a PÁGINA do experimento
   onRoomChange: ((room: RoomInfo | null) => void) | null; // entrou/saiu de uma sala
@@ -82,6 +96,8 @@ const KEY_BACK    = ['KeyS', 'ArrowDown'];
 const KEY_LEFT    = ['KeyA', 'ArrowLeft'];
 const KEY_RIGHT   = ['KeyD', 'ArrowRight'];
 const KEY_RUN     = ['ShiftLeft', 'ShiftRight'];
+
+const PAD_LOOK_SPEED = 2.5; // rad/s com o analógico direito no máximo
 
 export function createMuseumScene(container: HTMLDivElement, config: MuseumSceneConfig): MuseumScene {
   // ── Renderer ──
@@ -151,6 +167,19 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   const TOUCH_LOOK_SPEED = 0.005; // rad por pixel arrastado
   const MAX_PITCH = Math.PI / 2 - 0.05;
 
+  // Gira a visão: yaw > 0 vira para a esquerda, pitch > 0 olha para cima.
+  // Usado pelo toque e pelo analógico direito.
+  function rotateLook(yaw: number, pitch: number) {
+    look.setFromQuaternion(camera.quaternion);
+    look.y += yaw;
+    look.x = Math.min(Math.max(look.x + pitch, -MAX_PITCH), MAX_PITCH);
+    camera.quaternion.setFromEuler(look);
+  }
+
+  const gamepad = createGamepadReader();
+  let gamepadEnabled = false;
+  let gamepadWasConnected = false;
+
   const api: MuseumScene = {
     lock() { controls.lock(); },
     unlock() { controls.unlock(); },
@@ -159,10 +188,11 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       touchMove.y = y;
     },
     touchLook(dx, dy) {
-      look.setFromQuaternion(camera.quaternion);
-      look.y -= dx * TOUCH_LOOK_SPEED;
-      look.x = Math.min(Math.max(look.x - dy * TOUCH_LOOK_SPEED, -MAX_PITCH), MAX_PITCH);
-      camera.quaternion.setFromEuler(look);
+      rotateLook(-dx * TOUCH_LOOK_SPEED, -dy * TOUCH_LOOK_SPEED);
+    },
+    setGamepadEnabled(enabled) {
+      gamepadEnabled = enabled;
+      if (!enabled) interactRelease();
     },
     enterNearest() {
       if (currentDoor) goThroughDoor(currentDoor);
@@ -175,6 +205,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       room.level.setControls(room.values);
     },
     onLockChange: null,
+    onGamepadAction: null,
     onNearDoorChange: null,
     onEnter: null,
     onRoomChange: null,
@@ -320,8 +351,9 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
       }
     }
 
-    // Duas fontes de entrada para o mesmo movimento: teclado (com o mouse
-    // travado) ou joystick de toque. Ambas viram um vetor (frente, lado).
+    // Três fontes de entrada para o mesmo movimento: teclado (com o mouse
+    // travado), joystick de toque e controle de videogame. Todas viram um
+    // vetor (frente, lado).
     let forward: number;
     let strafe: number;
     let speed = WALK_SPEED;
@@ -332,6 +364,24 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
     } else {
       forward = touchMove.y;
       strafe  = touchMove.x;
+    }
+
+    const pad = gamepad.poll();
+    if (gamepadWasConnected && !pad.connected && gamepadEnabled) api.onGamepadAction?.('pause');
+    gamepadWasConnected = pad.connected;
+    if (pad.connected && gamepadEnabled) {
+      forward += pad.move.y;
+      strafe  += pad.move.x;
+      if (pad.pressed('rt') || pad.pressed('leftStick')) speed = RUN_SPEED;
+      if ((pad.look.x || pad.look.y) && !fade) {
+        rotateLook(-pad.look.x * PAD_LOOK_SPEED * dt, pad.look.y * PAD_LOOK_SPEED * dt);
+      }
+      if (pad.justPressed('a')) primaryDown();
+      if (pad.justReleased('a')) interactRelease();
+      if (pad.justPressed('start') && room) api.onGamepadAction?.('menu');
+      if (pad.justPressed('select')) api.onGamepadAction?.('pause');
+    } else if (pad.justPressed('a') || pad.justPressed('start')) {
+      api.onGamepadAction?.('resume');
     }
     if ((forward || strafe) && !fade) {
       // Limita o vetor a comprimento 1: andar na diagonal não fica mais rápido,
@@ -367,6 +417,7 @@ export function createMuseumScene(container: HTMLDivElement, config: MuseumScene
   function dispose() {
     renderer.setAnimationLoop(null);
     ro.disconnect();
+    gamepad.dispose();
     document.removeEventListener('keydown', onKeyDown);
     document.removeEventListener('keyup', onKeyUp);
     renderer.domElement.removeEventListener('mousedown', onMouseDown);

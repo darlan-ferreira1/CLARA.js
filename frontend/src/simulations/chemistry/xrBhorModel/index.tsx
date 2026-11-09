@@ -71,7 +71,7 @@ export default function XRBohrModelSimulation() {
           backdropFilter: 'blur(4px)', zIndex: 10, textAlign: 'center',
           pointerEvents: 'none',
         }}>
-          Em VR: gatilho direito → próximo elemento · gatilho esquerdo → anterior
+          Em VR: gatilho direito ou A → próximo elemento · gatilho esquerdo ou B → anterior · com controle, os analógicos andam e giram, RT/LT sobem e descem
         </div>
       </div>
 

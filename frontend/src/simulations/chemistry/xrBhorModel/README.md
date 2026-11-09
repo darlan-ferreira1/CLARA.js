@@ -92,6 +92,9 @@ O `ResizeObserver` ignora mudanças enquanto `renderer.xr.isPresenting` (o taman
 | VR | Gatilho do controle 0 (`selectstart`) | Próximo elemento (cíclico) |
 | VR | Gatilho do controle 1 | Elemento anterior |
 | VR | Movimento da cabeça / andar | Explora o átomo (6DoF) |
+| VR com controle de videogame | Analógico esquerdo / direito | Anda na direção do olhar / gira o corpo (`core/gamepadRig.ts`) |
+| VR com controle de videogame | RT / LT | Sobe / desce |
+| VR com controle de videogame | A / B | Próximo elemento / anterior |
 
 ## 7. Decisões e simplificações
 

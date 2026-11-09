@@ -61,6 +61,8 @@ const TOUCH_HELP = [
   ['❚❚', 'pausar'],
 ];
 
+const GAMEPAD_HELP = 'Controle: analógico esquerdo anda, direito olha, A entra ou segura, Start abre os ajustes, Select pausa. Aperte A para começar.';
+
 const kbdStyle = {
   border: '1px solid #666', borderRadius: 4, padding: '1px 7px',
   fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
@@ -89,11 +91,13 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
   // No celular não existe Pointer Lock: "jogando" = o aluno tocou em Começar.
   // Ao voltar de um experimento, já recomeça direto (sem a tela de instruções).
   const [touchPlaying, setTouchPlaying] = useState(IS_TOUCH && lastDoorId !== undefined);
+  // Com controle de videogame: "jogando" = o aluno apertou A ou Start.
+  const [padPlaying, setPadPlaying] = useState(false);
   const [nearDoor, setNearDoor] = useState<DoorPlacement | null>(null);
   const [interaction, setInteraction] = useState<string | null>(null);
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [hudOpen, setHudOpen] = useState(false);
-  const playing = locked || touchPlaying;
+  const playing = locked || touchPlaying || padPlaying;
 
   function pauseTouch() {
     sceneRef.current?.setTouchMove(0, 0);
@@ -121,6 +125,20 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
       background: theme === 'dark' ? 0x0a0a1a : 0xcfd6e6,
     });
     s.onLockChange = setLocked;
+    s.onGamepadAction = (action) => {
+      if (action === 'resume') {
+        setHudOpen(false);
+        setPadPlaying(true);
+      } else if (action === 'menu') {
+        setHudOpen(true);
+        s.unlock(); // no desktop, solta o mouse para usar o HUD
+      } else {
+        setPadPlaying(false);
+        setTouchPlaying(false);
+        s.setTouchMove(0, 0);
+        s.unlock();
+      }
+    };
     s.onNearDoorChange = setNearDoor;
     s.onInteractionChange = setInteraction;
     s.onRoomChange = (r) => {
@@ -136,6 +154,11 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
     return () => { s.dispose(); sceneRef.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
+
+  // O controle só move a cena enquanto se está jogando com ele e sem HUD aberto.
+  useEffect(() => {
+    sceneRef.current?.setGamepadEnabled(padPlaying && !hudOpen);
+  }, [padPlaying, hudOpen, theme]);
 
   // Desktop: Tab abre o HUD de ajustes dentro de uma sala (solta o mouse);
   // Esc com o HUD aberto volta para a tela de pausa.
@@ -190,9 +213,9 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
         }}>
           <div style={{ fontSize: 11, letterSpacing: '0.12em', opacity: 0.7, textTransform: 'uppercase' }}>Sala</div>
           <div style={{ fontSize: 17, fontWeight: 700 }}>{room.title}</div>
-          {!IS_TOUCH && (
+          {(!IS_TOUCH || padPlaying) && (
             <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
-              <kbd style={{ ...kbdStyle, fontSize: 11 }}>Tab</kbd> ajustes
+              <kbd style={{ ...kbdStyle, fontSize: 11 }}>{padPlaying ? 'Start' : 'Tab'}</kbd> ajustes
             </div>
           )}
         </div>
@@ -234,7 +257,7 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
             touchAction: 'none', userSelect: 'none',
           }}
         >
-          {!touchPlaying && <kbd style={kbdStyle}>E</kbd>}
+          {!touchPlaying && <kbd style={kbdStyle}>{padPlaying ? 'A' : 'E'}</kbd>}
           <span>
             {interaction
               ? (touchPlaying ? `Segure aqui para ${interaction}` : `Segure para ${interaction}`)
@@ -286,6 +309,9 @@ export default function VirtualMuseum({ theme, onEnter, onBack }: Props) {
                 ))}
               </tbody>
             </table>
+            <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '-10px 0 20px', lineHeight: 1.5 }}>
+              {GAMEPAD_HELP}
+            </p>
             <button
               // Pointer Lock só pode ser pedido dentro de um clique — por isso o
               // lock() é chamado aqui, no próprio handler.

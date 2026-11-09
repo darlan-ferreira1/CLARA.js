@@ -8,10 +8,13 @@
 // No modo XR: OrbitControls são desativados; o usuário gira a cabeça para observar.
 //   Gatilho direito (ctrl 0) → próximo elemento.
 //   Gatilho esquerdo (ctrl 1) → elemento anterior.
+// Com controle de videogame (core/gamepadRig.ts): os analógicos andam e giram
+// dentro da RV, RT/LT sobem e descem, A → próximo elemento, B → anterior.
 
 import * as THREE from 'three';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { createGamepadRig } from '../../../core/gamepadRig';
 import { computeElectronPositions, shellRadius } from '../BohrModel/physics';
 import { ELEMENTS } from '../BohrModel/elements';
 
@@ -51,6 +54,9 @@ export function createXRBohrScene(container: HTMLDivElement): XRBohrScene {
   controls.dampingFactor = 0.08;
   renderer.xr.addEventListener('sessionstart', () => { controls.enabled = false; });
   renderer.xr.addEventListener('sessionend',   () => { controls.enabled = true; });
+
+  // Câmera dentro de um rig que o controle de videogame move durante a RV.
+  const rig = createGamepadRig(renderer, scene, camera);
 
   // ── Iluminação ──
   scene.add(new THREE.AmbientLight(0xffffff, 1.8));
@@ -132,7 +138,7 @@ export function createXRBohrScene(container: HTMLDivElement): XRBohrScene {
     labelCtx.fillStyle = '#334455';
     labelCtx.font = '18px sans-serif';
     labelCtx.textAlign = 'center';
-    labelCtx.fillText('◄ Gatilho esq.   Elemento   Gatilho dir. ►', w / 2, 152);
+    labelCtx.fillText('◄ Gatilho esq. ou B   Elemento   Gatilho dir. ou A ►', w / 2, 152);
     labelTex.needsUpdate = true;
   }
 
@@ -145,7 +151,7 @@ export function createXRBohrScene(container: HTMLDivElement): XRBohrScene {
       new THREE.Vector3(0, 0, -5),
     ]);
     ctrl.add(new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x88aaff, opacity: 0.4, transparent: true })));
-    scene.add(ctrl);
+    rig.group.add(ctrl); // acompanham o rig, como a câmera
   });
 
   // ── Estado ──
@@ -253,7 +259,11 @@ export function createXRBohrScene(container: HTMLDivElement): XRBohrScene {
   // ── Loop de animação (setAnimationLoop é obrigatório para XR) ──
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
-    simTime += clock.getDelta();
+    const dt = clock.getDelta();
+    simTime += dt;
+    const pad = rig.tick(Math.min(dt, 0.05));
+    if (pad.justPressed('a')) api.setElement((elemIndex + 1) % XR_ELEMENTS.length);
+    if (pad.justPressed('b')) api.setElement((elemIndex - 1 + XR_ELEMENTS.length) % XR_ELEMENTS.length);
     updateElectrons(XR_ELEMENTS[elemIndex][4], simTime);
     controls.update();
     renderer.render(scene, camera);
@@ -262,6 +272,7 @@ export function createXRBohrScene(container: HTMLDivElement): XRBohrScene {
   function dispose() {
     renderer.setAnimationLoop(null);
     ro.disconnect();
+    rig.dispose();
     controls.dispose();
     protonMat.dispose();
     neutronMat.dispose();

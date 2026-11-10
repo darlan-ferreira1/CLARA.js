@@ -25,3 +25,6 @@ dist-ssr
 
 # Gerado por scripts/mediapipe-assets.mjs (motor e modelo do MediaPipe)
 public/mediapipe/
+
+# Saída dos testes (Playwright)
+tests/resultados/

@@ -33,10 +33,22 @@ export interface HandLandmarkTracker {
   dispose(): void;
 }
 
+// O MediaPipe precisa de WebGL mesmo para processar a imagem da câmera, e usa um
+// OffscreenCanvas sempre que o navegador tem um. O WebKitGTK (app de Linux) tem
+// OffscreenCanvas, mas sem WebGL nele: o rastreador falharia ao ser criado. Nesse
+// caso entregamos um <canvas> comum, onde o WebGL funciona (é o que o Three.js usa).
+function canvasForMediaPipe(): HTMLCanvasElement | undefined {
+  if (typeof OffscreenCanvas === 'undefined') return undefined;
+  const offscreen = new OffscreenCanvas(1, 1);
+  const hasWebGL = offscreen.getContext('webgl2') !== null || offscreen.getContext('webgl') !== null;
+  return hasWebGL ? undefined : document.createElement('canvas');
+}
+
 export async function createHandLandmarkTracker(numHands = 1): Promise<HandLandmarkTracker> {
   const fileset = await FilesetResolver.forVisionTasks(WASM_BASE);
   const landmarker = await HandLandmarker.createFromOptions(fileset, {
     baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
+    canvas: canvasForMediaPipe(),
     runningMode: 'VIDEO',
     numHands,
   });

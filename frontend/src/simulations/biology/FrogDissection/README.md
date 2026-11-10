@@ -61,6 +61,8 @@ const landmarker = await HandLandmarker.createFromOptions(fileset, {
 });
 ```
 
+No app de Linux (WebKitGTK), o `OffscreenCanvas` padrão do MediaPipe não tem WebGL. Por isso `core/handTracking.ts` entrega um `<canvas>` comum nesse caso.
+
 O **Hand Landmarker** do MediaPipe é um pipeline de duas redes neurais (detector de palma + regressor de pontos) que devolve **21 *landmarks*** 3D por mão, normalizados em [0, 1] relativos ao quadro do vídeo.
 
 ### Pontos usados

@@ -95,7 +95,7 @@ export default function HandKinematicsSimulation({ theme }: Props) {
   const hint = !camera.ready
     ? 'Carregando câmera e modelo de rastreamento de mão…'
     : noCamera
-      ? 'Câmera indisponível — clique e arraste na área do gráfico para mover o "móvel" com o mouse.'
+      ? `${camera.cameraError ? 'Câmera indisponível' : 'Rastreamento de mão indisponível'} — clique e arraste na área do gráfico para mover o "móvel" com o mouse.`
       : !handSeen
         ? 'Mostre a mão aberta para a câmera, com a palma virada para ela.'
         : !calibrated
@@ -124,7 +124,7 @@ export default function HandKinematicsSimulation({ theme }: Props) {
           style={{
             position: 'absolute', right: 16, bottom: 34, width: 'min(28vw, 200px)', aspectRatio: '4 / 3',
             objectFit: 'cover', transform: 'scaleX(-1)', borderRadius: 8,
-            border: `1px solid ${c.panelBorder}`, background: '#000', opacity: noCamera ? 0 : 0.9,
+            border: `1px solid ${c.panelBorder}`, background: '#000', opacity: camera.cameraError ? 0 : 0.9,
             pointerEvents: 'none',
           }}
         />

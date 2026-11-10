@@ -78,7 +78,7 @@ export default function BoyleHandsSimulation({ theme }: Props) {
   const hint = !camera.ready
     ? 'Carregando câmera e modelo de rastreamento de mãos…'
     : noCamera
-      ? 'Câmera indisponível — clique e arraste para os lados para abrir ou fechar o recipiente.'
+      ? `${camera.cameraError ? 'Câmera indisponível' : 'Rastreamento de mãos indisponível'} — clique e arraste para os lados para abrir ou fechar o recipiente.`
       : handsSeen < 2
         ? `Mostre as DUAS mãos para a câmera, palmas abertas (${handsSeen}/2 detectadas).`
         : 'Aproxime as mãos para comprimir o gás; afaste para expandir.';
@@ -101,7 +101,7 @@ export default function BoyleHandsSimulation({ theme }: Props) {
           playsInline
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-            transform: 'scaleX(-1)', opacity: noCamera ? 0 : 0.55, pointerEvents: 'none',
+            transform: 'scaleX(-1)', opacity: camera.cameraError ? 0 : 0.55, pointerEvents: 'none',
           }}
         />
         <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />

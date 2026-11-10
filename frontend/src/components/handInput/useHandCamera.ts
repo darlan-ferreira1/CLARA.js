@@ -39,7 +39,8 @@ export function useHandCamera(videoRef: RefObject<HTMLVideoElement | null>, numH
         const tracker = await createHandLandmarkTracker(numHands);
         if (cancelled) tracker.dispose();
         else trackerRef.current = tracker;
-      } catch {
+      } catch (err) {
+        console.warn('[webcam] rastreador de mãos falhou:', err);
         if (!cancelled) setTrackerError(true);
       }
       try {
@@ -50,7 +51,8 @@ export function useHandCamera(videoRef: RefObject<HTMLVideoElement | null>, numH
           video.srcObject = stream;
           await video.play();
         }
-      } catch {
+      } catch (err) {
+        console.warn('[webcam] câmera falhou:', err);
         if (!cancelled) setCameraError(true);
       }
       if (!cancelled) setReady(true);

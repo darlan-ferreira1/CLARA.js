@@ -60,7 +60,8 @@ export default function FrogDissectionSimulation() {
     const init = async () => {
       try {
         tracker = await createHandTracker();
-      } catch {
+      } catch (err) {
+        console.warn('[webcam] rastreador de mãos falhou:', err);
         setTrackerError(true);
       }
 
@@ -72,7 +73,8 @@ export default function FrogDissectionSimulation() {
           video.srcObject = stream;
           await video.play();
         }
-      } catch {
+      } catch (err) {
+        console.warn('[webcam] câmera falhou:', err);
         setCameraError(true);
       }
 

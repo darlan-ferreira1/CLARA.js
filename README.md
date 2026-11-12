@@ -6,6 +6,14 @@ Os experimentos rodam inteiramente no navegador, sem instalação e sem servidor
 
 Site publicado: https://darlan-ferreira1.github.io/CLARA.js/
 
+![Museu Virtual: o salão com uma porta para cada experimento e a sala interativa da Geometria Molecular, com o painel de ajustes aberto](screenshotsCLARAJS/museuEntradaAndSala.png)
+
+![Realidade aumentada no celular: ajustes antes de começar, retícula sobre a mesa e o átomo posicionado e ampliado com a pinça](screenshotsCLARAJS/ar2tcc.png)
+
+![Dupla Hélice de DNA em realidade virtual no celular, com uma imagem para cada olho](screenshotsCLARAJS/RVEspiral.jpg)
+
+![Painéis Teoria e Como foi feito, que acompanham todo experimento](screenshotsCLARAJS/teoriaComoFoiFeito.png)
+
 ## Downloads
 
 O CLARA.js também pode ser **instalado** e usado **sem internet**. As versões ficam na página de [**Releases**](https://github.com/darlan-ferreira1/CLARA.js/releases/latest).
@@ -14,7 +22,7 @@ O CLARA.js também pode ser **instalado** e usado **sem internet**. As versões 
 |---|---|---|
 | **Windows** | `CLARA_<versão>_x64-setup.exe` (ou o `.msi`) | Tudo do site, offline desde a instalação. A realidade aumentada e a virtual imersiva ficam no site, porque não existem no PC. |
 | **Linux** | `.AppImage` (qualquer distribuição) ou `.deb` (Debian/Ubuntu) | Igual ao Windows. AppImage: `chmod +x` no arquivo e depois executá-lo. |
-| **Android** | `.apk` | Tudo do site, **inclusive a realidade aumentada**. Requer o Chrome. Offline depois do primeiro uso. |
+| **Android** | `.apk` | Tudo do site, **inclusive a realidade aumentada e a virtual**. Abre no navegador do celular (Chrome ou outro compatível). Offline depois do primeiro uso. |
 | **Navegador** | — | No Chrome ou no Edge, use **"Instalar app"** na barra de endereço. Offline depois do primeiro acesso. |
 
 > Os instaladores não têm assinatura digital paga. No Windows, o SmartScreen pode mostrar "O Windows protegeu o computador": clique em **Mais informações → Executar assim mesmo**. No Android, permita a instalação de apps de fontes desconhecidas.
@@ -46,8 +54,9 @@ A contribuição do trabalho para a Ciência da Computação é a **arquitetura 
 | Biologia | Dissecação Guiada por Gestos | Webcam (MediaPipe) |
 
 - **Realidade aumentada:** aponte o celular para o chão ou uma mesa, toque para posicionar o objeto e ajuste com os dedos (arrastar, pinça, girar). Requer Android com Chrome e ARCore.
-- **Realidade virtual:** requer um headset compatível com WebXR.
+- **Realidade virtual:** funciona em headsets compatíveis com WebXR e também no celular, com a tela dividida em uma imagem para cada olho.
 - **Webcam:** sem câmera, o mouse funciona como alternativa.
+- **Controle de videogame:** no Museu Virtual e nas cenas de realidade virtual, um analógico anda, o outro olha ao redor, e o direcional ajusta os parâmetros no painel de ajustes.
 
 Cada pasta de experimento tem um `README.md` explicando em detalhe como ele foi feito e um `teoria.md` com o conteúdo para o aluno. Os dois aparecem dentro do próprio site.
 ## Stack
@@ -78,17 +87,17 @@ Cada experimento fica numa pasta própria em `src/simulations/<área>/<Nome>/`:
 | `index.tsx` | **Página**: componente React com os controles; cria a cena, repassa os parâmetros e a libera ao sair. |
 | `teoria.md` / `README.md` | Conteúdo para o aluno e documentação técnica. |
 
+![As três camadas de um experimento: index.tsx usa scene.ts, que usa physics.ts](screenshotsCLARAJS/fig1.png)
+
 ### Contrato montável e hospedeiros
 
 Os experimentos mais recentes seguem um **contrato montável** (`src/core/mountable.ts`): o experimento só sabe montar seus objetos num grupo (`mount`), avançar no tempo (`tick`), reagir a parâmetros (`update`) e se liberar (`dispose`). Renderer, câmera, luzes e laço de animação são fornecidos por quem o **hospeda**:
 
-```
-                    ┌─► hostInPage        página do experimento (Galeria)
-experimento ────────┼─► sala interativa   Museu Virtual        (sala.ts)
-(mount/tick/...)    └─► hostInAR          realidade aumentada  (ar.ts)
-```
+![Um experimento montável exibido por três hospedeiros: a página, a sala interativa do Museu Virtual e a realidade aumentada](screenshotsCLARAJS/figura2.png)
 
 Assim, o mesmo Modelo de Bohr aparece na página, no Museu Virtual e em AR sem duplicar código. Dar AR ou uma sala a um experimento montável custa um arquivo de definição curto (`ar.ts` ou `sala.ts`).
+
+![Antes, duas cenas copiadas com 674 linhas; depois, um experimento montável e dois hospedeiros, com cerca de 20 linhas por experimento em RA](screenshotsCLARAJS/fi3.png)
 
 ### Estrutura de pastas
 
@@ -106,6 +115,8 @@ src/
 │   ├── hostInPage.ts       # hospedeiro "página"
 │   ├── controls.ts         # controles declarativos (ControlDef)
 │   ├── handTracking.ts     # rastreamento de mãos (MediaPipe), comum aos experimentos de webcam
+│   ├── gamepad.ts          # controle de videogame (Gamepad API)
+│   ├── gamepadRig.ts       # controle de videogame nas cenas de realidade virtual
 │   ├── offline.ts          # registra o service worker (modo offline / PWA)
 │   └── platform.ts         # detecta o app de desktop (sem WebXR)
 ├── components/
@@ -153,9 +164,20 @@ O endereço tem `/CLARA.js/` no final porque o `vite.config.ts` define `base: '/
 
 Antes do `dev` e do `build`, o script `scripts/mediapipe-assets.mjs` copia o motor do MediaPipe para `public/mediapipe/` e baixa o modelo da mão (só na primeira vez). Isso permite que o rastreamento funcione offline. O service worker (modo offline do site) só existe no build de produção: use `npm run build` + `npm run preview` para testá-lo.
 
+## Testes
+
+Os testes ficam em `frontend/tests/` (ver o [`README`](frontend/tests/README.md) da pasta). Os testes de ponta a ponta usam o **Playwright** e rodam cada roteiro em um perfil de computador e outro de celular. Eles são gerados a partir do `registry.ts`, então um experimento novo passa a ser testado sozinho. Dentro de `frontend/`:
+
+```bash
+npm run test:e2e        # roda tudo, sem abrir janelas
+npm run test:e2e:ui     # interface do Playwright, para acompanhar cada teste
+```
+
 ## Compilando os apps instaláveis
 
 Os apps de Windows e Linux usam o **Tauri 2** (`frontend/src-tauri/`) e exibem o mesmo build do site. O app Android é uma **TWA** (`android/`), que abre o site publicado. Cada sistema só compila no próprio sistema: o Linux não compila no Windows, e vice-versa.
+
+![O mesmo código-fonte gera o site/PWA, os apps de Windows e Linux (Tauri 2) e o app Android (TWA)](screenshotsCLARAJS/fig4.png)
 
 ### Windows
 
